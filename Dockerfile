@@ -5,8 +5,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 RUN useradd --create-home --uid 10001 appuser
 COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir -r requirements.txt
-COPY app.py .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY app.py ./
+COPY templates ./templates
+COPY static ./static
 USER appuser
 EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=3s CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health')" || exit 1

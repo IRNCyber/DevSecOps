@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101a2e">
+  <meta name="description" content="A focused task manager with a secure Flask API and automated CI security gates.">
+  <title>Focusboard — Secure Task Manager</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Main navigation">
+      <a class="brand" href="/" aria-label="Focusboard home">
+        <span class="brand-mark" aria-hidden="true">F</span>
+        <span>focusboard<span class="brand-period">.</span></span>
+      </a>
+      <div class="workspace-label">WORKSPACE</div>
+      <nav class="nav-list" aria-label="Task views">
+        <button class="nav-item active" data-filter="all"><span class="nav-icon">▦</span><span>All tasks</span><span class="nav-count" id="nav-total">0</span></button>
+        <button class="nav-item" data-filter="open"><span class="nav-icon">◷</span><span>To do</span><span class="nav-count" id="nav-open">0</span></button>
+        <button class="nav-item" data-filter="in_progress"><span class="nav-icon">↗</span><span>In progress</span><span class="nav-count" id="nav-progress">0</span></button>
+        <button class="nav-item" data-filter="done"><span class="nav-icon">✓</span><span>Completed</span><span class="nav-count" id="nav-done">0</span></button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="security-note"><span class="security-dot"></span><div><strong>Secure by design</strong><small>Input validation · SQL parameters</small></div></div>
+        <div class="sidebar-foot">FOCUSBOARD <span>·</span> PERSONAL WORKSPACE</div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="breadcrumb">Workspace <span>/</span> <strong id="view-name">All tasks</strong></div>
+        <div class="top-actions"><span class="local-badge"><span></span> Local workspace</span><span class="avatar" aria-label="Personal workspace">P</span></div>
+      </header>
+
+      <section class="page-heading">
+        <div>
+          <p class="eyebrow" id="today-label">YOUR DAY, IN FOCUS</p>
+          <h1 id="heading-title">All tasks<span class="heading-dot">.</span></h1>
+          <p class="subtitle">A clear view of what needs your attention.</p>
+        </div>
+        <button class="primary-button" id="add-task"><span aria-hidden="true">＋</span> New task</button>
+      </section>
+
+      <section class="stats-grid" aria-label="Task overview">
+        <article class="stat-card"><div class="stat-top"><span>Total tasks</span><span class="stat-icon indigo">▦</span></div><strong id="stat-total">0</strong><small>Across your workspace</small></article>
+        <article class="stat-card"><div class="stat-top"><span>To do</span><span class="stat-icon amber">◷</span></div><strong id="stat-open">0</strong><small>Ready when you are</small></article>
+        <article class="stat-card"><div class="stat-top"><span>In progress</span><span class="stat-icon blue">↗</span></div><strong id="stat-progress">0</strong><small>Currently underway</small></article>
+        <article class="stat-card"><div class="stat-top"><span>Completed</span><span class="stat-icon green">✓</span></div><strong id="stat-done">0</strong><small>One step at a time</small></article>
+      </section>
+
+      <section class="task-panel" aria-labelledby="task-section-title">
+        <div class="panel-header">
+          <div><h2 id="task-section-title">Your tasks</h2><p id="task-count">Loading your workspace…</p></div>
+          <label class="search-box"><span aria-hidden="true">⌕</span><input id="search" type="search" maxlength="120" placeholder="Search tasks" aria-label="Search tasks"></label>
+        </div>
+        <div class="list-head" aria-hidden="true"><span>TASK</span><span>PRIORITY</span><span>STATUS</span><span>DUE DATE</span><span></span></div>
+        <div id="task-list" class="task-list" aria-live="polite"></div>
+        <div id="empty-state" class="empty-state" hidden>
+          <div class="empty-art" aria-hidden="true"><span>✓</span></div>
+          <h3 id="empty-title">A little room to think.</h3>
+          <p id="empty-copy">Your task list is clear. Add a task to get started.</p>
+          <button class="text-button" id="empty-add">Create your first task <span>→</span></button>
+        </div>
+      </section>
+      <footer class="page-footer"><span>FOCUSBOARD</span><span>Thoughtful work, one task at a time.</span><a href="/health">System status <i></i></a></footer>
+    </main>
+  </div>
+
+  <dialog id="task-dialog" class="task-dialog" aria-labelledby="dialog-title">
+    <form id="task-form">
+      <div class="dialog-heading"><div><p class="eyebrow">TASK DETAILS</p><h2 id="dialog-title">Create a task</h2></div><button type="button" class="icon-button" id="close-dialog" aria-label="Close">×</button></div>
+      <label class="field-label" for="title">Title <span>*</span></label>
+      <input id="title" name="title" required maxlength="120" placeholder="What needs to get done?">
+      <label class="field-label" for="description">Description <small>Optional</small></label>
+      <textarea id="description" name="description" rows="4" maxlength="2000" placeholder="Add a little context…"></textarea>
+      <div class="field-row">
+        <div><label class="field-label" for="priority">Priority</label><select id="priority" name="priority"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div>
+        <div><label class="field-label" for="status">Status</label><select id="status" name="status"><option value="open">To do</option><option value="in_progress">In progress</option><option value="done">Completed</option></select></div>
+      </div>
+      <label class="field-label" for="due-date">Due date <small>Optional</small></label>
+      <input id="due-date" name="due_date" type="date">
+      <p class="form-error" id="form-error" role="alert" hidden></p>
+      <div class="dialog-actions"><button type="button" class="secondary-button" id="cancel-dialog">Cancel</button><button class="primary-button" id="save-task">Save task</button></div>
+    </form>
+  </dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
