@@ -12,8 +12,11 @@ jobs:
   secrets:
     name: Secret scan (Gitleaks)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -25,7 +28,7 @@ jobs:
     name: Dependency scan (Trivy)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v6.0.2
         with:
           persist-credentials: false
       - name: Scan files and dependencies
@@ -37,17 +40,18 @@ jobs:
           severity: HIGH,CRITICAL
           exit-code: '1'
           format: table
+          github-pat: ${{ github.token }}
 
   sast:
     name: SAST and quality gate (SonarQube Cloud)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 0
           persist-credentials: false
       - name: Analyze and wait for quality gate
-        uses: SonarSource/sonarqube-scan-action@v6.0.0
+        uses: SonarSource/sonarqube-scan-action@v8.3.0
         with:
           args: >-
             -Dsonar.qualitygate.wait=true
@@ -59,37 +63,45 @@ jobs:
     name: Container scan (Trivy)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v6.0.2
         with:
           persist-credentials: false
       - name: Build local image
-        run: docker build --tag devsecops-demo:${{ github.sha }} .
+        run: docker build --tag focusboard:${{ github.sha }} .
       - name: Scan image for HIGH/CRITICAL vulnerabilities
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: devsecops-demo:${{ github.sha }}
+          image-ref: focusboard:${{ github.sha }}
           scan-type: image
           scanners: vuln
           severity: HIGH,CRITICAL
           exit-code: '1'
           format: table
+          github-pat: ${{ github.token }}
 
   sbom:
     name: Generate SBOM
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: read
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v6.0.2
         with:
           persist-credentials: false
       - name: Build image
-        run: docker build --tag devsecops-demo:${{ github.sha }} .
+        run: docker build --tag focusboard:${{ github.sha }} .
       - name: Generate CycloneDX SBOM
         uses: anchore/sbom-action@v0.24.0
         with:
-          image: devsecops-demo:${{ github.sha }}
-          artifact-name: sbom-cyclonedx.json
+          image: focusboard:${{ github.sha }}
+          output-file: sbom-cyclonedx.json
           format: cyclonedx-json
-          upload-artifact: true
+          upload-artifact: false
+          upload-release-assets: false
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: sbom-cyclonedx
+          path: sbom-cyclonedx.json
+          if-no-files-found: error
+          retention-days: 14
