@@ -31,7 +31,7 @@ The application is single-workspace and does not implement user authentication. 
 | Trivy image | Scan the built Docker image | HIGH/CRITICAL finding fails the job |
 | Syft | Generate CycloneDX inventory | Uploads SBOM as an Actions artifact |
 
-The jobs run on pushes and pull requests. Workflow permissions default to read-only; the Gitleaks job receives scoped `pull-requests: write` permission so it can annotate detected secrets on pull requests. The Sonar token is stored as a repository Actions secret. Fork pull requests do not receive that secret and fail closed at the Sonar job.
+The jobs run on pushes and pull requests. Workflow permissions default to read-only; the Gitleaks job receives scoped `pull-requests: write` permission so it can annotate detected secrets on pull requests. SonarQube Cloud uses the `SONAR_TOKEN` repository secret plus `SONAR_ORGANIZATION` and `SONAR_PROJECT_KEY` Actions variables. Missing configuration fails closed instead of skipping the quality gate; fork pull requests do not receive the secret.
 
 ## Reproduction and evidence
 
